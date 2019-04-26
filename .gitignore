@@ -1,0 +1,4 @@
+*.aux
+*.log
+*.dvi
+__pycache__

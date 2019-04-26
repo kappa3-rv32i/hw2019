@@ -1,0 +1,111 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 1991-2011 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus II
+# Version 11.0 Build 208 07/03/2011 Service Pack 1 SJ Web Edition
+# Date created = 15:15:47  March 22, 2012
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		stop_watch_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus II software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE EP4CE30F23C7
+set_global_assignment -name TOP_LEVEL_ENTITY stop_watch
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "11.0 SP1"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "15:15:47  MARCH 22, 2012"
+set_global_assignment -name LAST_QUARTUS_VERSION "11.0 SP1"
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+set_global_assignment -name DEVICE_FILTER_PIN_COUNT 484
+set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 7
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name CYCLONEIII_CONFIGURATION_SCHEME "ACTIVE PARALLEL"
+set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+set_global_assignment -name GENERATE_RBF_FILE ON
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS_WEAK_PULLUP "AS INPUT TRI-STATED"
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
+set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_global_assignment -name VERILOG_FILE stop_watch.v
+set_global_assignment -name VERILOG_FILE dynamic_display.v
+set_global_assignment -name VERILOG_FILE watch_body.v
+set_global_assignment -name VERILOG_FILE time_display.v
+set_global_assignment -name VERILOG_FILE key_module.v
+set_global_assignment -name VERILOG_FILE display_module.v
+set_global_assignment -name VERILOG_FILE ctrg_rmv.v
+set_location_assignment PIN_A12 -to CLK
+set_location_assignment PIN_J21 -to CYCLONE_A[6]
+set_location_assignment PIN_J22 -to CYCLONE_A[5]
+set_location_assignment PIN_H21 -to CYCLONE_A[4]
+set_location_assignment PIN_H22 -to CYCLONE_A[3]
+set_location_assignment PIN_U19 -to CYCLONE_A[2]
+set_location_assignment PIN_F19 -to CYCLONE_A[1]
+set_location_assignment PIN_M22 -to CYCLONE_A_OUT
+set_location_assignment PIN_K17 -to CYCLONE_B[3]
+set_location_assignment PIN_K18 -to CYCLONE_B[2]
+set_location_assignment PIN_K19 -to CYCLONE_B[1]
+set_location_assignment PIN_K21 -to CYCLONE_B[0]
+set_location_assignment PIN_F8 -to LED[3]
+set_location_assignment PIN_C8 -to LED[2]
+set_location_assignment PIN_B8 -to LED[1]
+set_location_assignment PIN_A8 -to LED[0]
+set_location_assignment PIN_D19 -to PSW[3]
+set_location_assignment PIN_C19 -to PSW[2]
+set_location_assignment PIN_B19 -to PSW[1]
+set_location_assignment PIN_A19 -to PSW[0]
+set_location_assignment PIN_AB20 -to RSTN
+set_location_assignment PIN_F14 -to RSW[3]
+set_location_assignment PIN_E14 -to RSW[2]
+set_location_assignment PIN_B14 -to RSW[1]
+set_location_assignment PIN_A14 -to RSW[0]
+set_location_assignment PIN_A3 -to SEG_A[7]
+set_location_assignment PIN_B6 -to SEG_A[6]
+set_location_assignment PIN_A6 -to SEG_A[5]
+set_location_assignment PIN_A5 -to SEG_A[4]
+set_location_assignment PIN_B4 -to SEG_A[3]
+set_location_assignment PIN_B3 -to SEG_A[2]
+set_location_assignment PIN_A4 -to SEG_A[1]
+set_location_assignment PIN_B5 -to SEG_A[0]
+set_location_assignment PIN_C3 -to SEG_SEL[3]
+set_location_assignment PIN_C4 -to SEG_SEL[2]
+set_location_assignment PIN_E5 -to SEG_SEL[1]
+set_location_assignment PIN_E6 -to SEG_SEL[0]
+set_location_assignment PIN_F20 -to CYCLONE_A[0]
+set_location_assignment PIN_A9 -to LED[4]
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
