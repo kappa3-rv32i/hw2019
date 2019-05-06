@@ -26,11 +26,13 @@
 // step_phase: 1フェイズ実行
 // step_inst:  1命令実行
 // cstate:     命令実行フェーズを表すビットベクタ
+// running:    実行中を表す信号
 module phasegen(input  	     clock,
 		input 	     reset,
 		input 	     run,
 		input 	     step_phase,
 		input 	     step_inst,
-		output [3:0] cstate);
+		output [3:0] cstate,
+		output      running);
 
 endmodule // phasegen

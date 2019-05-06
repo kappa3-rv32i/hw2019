@@ -24,42 +24,45 @@
 //     9,     - | memory
 //
 // [入出力]
-// sys_clock: システムクロック
-// reset:     リセット
-// clock:     クロック
-// input_val: 入力された値
-// button1:   psw_b4 が押された時に1になる信号
-// button2:   psw_c4 が押された時に1になる信号
-// button3:   psw_d4 が押された時に1になる信号
-// hex_a:     ロータリースイッチA
-// hex_b:     ロータリースイッチB
-// dip_a:     DIPスイッチA
-// dip_b:     DIPスイッチB
-// pc_out:    PCの値
-// pc_ld:     PCのデバッグ用書き込みイネーブル
-// ir_out:    IRの値
-// ir_ld:     IRのデバッグ用書き込みイネーブル
-// reg_out:   レジスタファイルの値
-// reg_addr:  レジスタファイルのデバッグ用アドレス
-// reg_ld:    レジスタファイルのデバッグ用書き込みイネーブル
-// a_out:     Aレジスタの値
-// a_ld:      Aレジスタの書き込みイネーブル
-// b_out:     Bレジスタの値
-// b_ld:      Bレジスタの書き込みイネーブル
-// c_out:     Cレジスタの値
-// c_ld:      Cレジスタの書き込みイネーブル
-// mem_addr:  メモリアドレス
-// mem_out:   メモリから読み出した値
-// mem_read:  メモリの読み出しイネーブル
-// mem_write: メモリの書き込みイネーブル
-// seg7_a:    MU500-7SEGボードのAグループのセグメント(8ビット x 8個)
-// seg7_b:    MU500-7SEGボードのBグループのセグメント(8ビット x 8個)
-// seg7_c:    MU500-7SEGボードのCグループのセグメント(8ビット x 8個)
-// seg7_d:    MU500-7SEGボードのDグループのセグメント(8ビット x 8個)
-// seg7_e:    MU500-7SEGボードのEグループのセグメント(8ビット x 8個)
-// seg7_f:    MU500-7SEGボードのFグループのセグメント(8ビット x 8個)
-// seg7_g:    MU500-7SEGボードのGグループのセグメント(8ビット x 8個)
-// seg7_h:    MU500-7SEGボードのHグループのセグメント(8ビット x 8個)
+// sys_clock:  システムクロック
+// reset:      リセット
+// clock:      クロック
+// input_val:  入力された値
+// button1:    psw_b4 が押された時に1になる信号
+// button2:    psw_c4 が押された時に1になる信号
+// button3:    psw_d4 が押された時に1になる信号
+// run:        run 信号
+// step_phase: step_phase 信号
+// step_inst:  step_inst 信号
+// hex_a:      ロータリースイッチA
+// hex_b:      ロータリースイッチB
+// dip_a:      DIPスイッチA
+// dip_b:      DIPスイッチB
+// pc_out:     PCの値
+// pc_ld:      PCのデバッグ用書き込みイネーブル
+// ir_out:     IRの値
+// ir_ld:      IRのデバッグ用書き込みイネーブル
+// reg_out:    レジスタファイルの値
+// reg_addr:   レジスタファイルのデバッグ用アドレス
+// reg_ld:     レジスタファイルのデバッグ用書き込みイネーブル
+// a_out:      Aレジスタの値
+// a_ld:       Aレジスタの書き込みイネーブル
+// b_out:      Bレジスタの値
+// b_ld:       Bレジスタの書き込みイネーブル
+// c_out:      Cレジスタの値
+// c_ld:       Cレジスタの書き込みイネーブル
+// mem_addr:   メモリアドレス
+// mem_out:    メモリから読み出した値
+// mem_read:   メモリの読み出しイネーブル
+// mem_write:  メモリの書き込みイネーブル
+// seg7_a:     MU500-7SEGボードのAグループのセグメント(8ビット x 8個)
+// seg7_b:     MU500-7SEGボードのBグループのセグメント(8ビット x 8個)
+// seg7_c:     MU500-7SEGボードのCグループのセグメント(8ビット x 8個)
+// seg7_d:     MU500-7SEGボードのDグループのセグメント(8ビット x 8個)
+// seg7_e:     MU500-7SEGボードのEグループのセグメント(8ビット x 8個)
+// seg7_f:     MU500-7SEGボードのFグループのセグメント(8ビット x 8個)
+// seg7_g:     MU500-7SEGボードのGグループのセグメント(8ビット x 8個)
+// seg7_h:     MU500-7SEGボードのHグループのセグメント(8ビット x 8個)
 module debugger(input         sys_clock,
 		input 	      reset,
 		input 	      clock,
@@ -67,6 +70,10 @@ module debugger(input         sys_clock,
 		input 	      button1,
 		input 	      button2,
 		input 	      button3,
+		output 	      run,
+		output 	      step_phase,
+		output 	      step_inst,
+		input [3:0]   cstate,
 		input [3:0]   hex_a,
 		input [3:0]   hex_b,
 		input [7:0]   dip_a,
@@ -464,6 +471,9 @@ module debugger(input         sys_clock,
    assign seg7_g = g_func(page);
    assign seg7_h = b_func(page, b_out, mem_out)  & blink_func(b_sel | mem_sel, blink);
 
+   assign run        = button1 & !dbg_mode;
+   assign step_phase = button2 & !dbg_mode;
+   assign step_inst  = button3 & !dbg_mode;
    assign pc_ld     = pc_sel  & dbg_mode & button3;
    assign ir_ld     = ir_sel  & dbg_mode & button3;
    assign a_ld      = a_sel   & dbg_mode & button3;
@@ -486,6 +496,8 @@ module debugger(input         sys_clock,
 	 clock_count <= {clock_count[6:0], clock_count[7]};
       end
    end
-   assign led_out = clock_count;
+   //assign led_out = clock_count;
+   assign led_out = {cstate, 4'b0};
+
 
 endmodule // debugger

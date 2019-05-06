@@ -21,6 +21,7 @@
 // wrdata:      書き込みデータ
 // wrbits:      書き込み用ビットマスク
 // rddata:      読み出しデータ
+// dbg_mode:    デバッグモード
 // dbg_address: デバッグ用のアドレス
 // dbg_read:    デバッグ用の読み出しイネーブル
 // dbg_write:   デバッグ用の書き込みイネーブル
@@ -33,6 +34,7 @@ module memory(input         clock,
 	      input [3:0]   wrbits,
 	      output [31:0] rddata,
 
+	      input 	    dbg_mode,
 	      input [31:0]  dbg_address,
 	      input 	    dbg_read,
 	      input 	    dbg_write,
@@ -47,7 +49,7 @@ module memory(input         clock,
 
    // 本当の wribts
    // デバッグモードでは常に全バイト書き込む．
-   wire [3:0] 		    ewrbits;
+   reg [3:0] 		    ewrbits;
 
    // address が範囲内にある時 1 になる信号
    wire 		    select;
@@ -80,10 +82,21 @@ module memory(input         clock,
 	       .data(ewrdata[31:24]),
 	       .q(rddata[31:24]));
 
-   assign eaddress = (dbg_read || dbg_write) ? dbg_address : address;
-   assign ewrdata = (dbg_write) ? dbg_in : wrdata;
-   assign ewrbits = (dbg_write) ? 4'b1111 : wrbits;
-   assign select = eaddress[31:16] == 30'b0000_0000_0000_0000;
+   always @ ( * ) begin
+      if ( dbg_write ) begin
+	 ewrbits = 4'b1111;
+      end
+      else if ( write ) begin
+	 ewrbits = wrbits;
+      end
+      else begin
+	 ewrbits = 4'b0000;
+      end
+   end
+
+   assign eaddress = dbg_mode ? dbg_address : address;
+   assign ewrdata = dbg_mode ? dbg_in : wrdata;
+   assign select = (eaddress[31:16] == 16'b0000_0000);
    assign wr0 = select & ewrbits[0];
    assign wr1 = select & ewrbits[1];
    assign wr2 = select & ewrbits[2];
