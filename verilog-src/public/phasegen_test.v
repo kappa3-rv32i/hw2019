@@ -133,12 +133,14 @@ module phasegen_test(input        sys_clock,
 
    // phasegen
    wire [3:0] 		    cstate;
+   wire 		    running;
    phasegen pg_inst(.clock(clock),
 		    .reset(reset),
 		    .run(out_b4),
 		    .step_phase(out_c4),
 		    .step_inst(out_d4),
-		    .cstate(cstate));
+		    .cstate(cstate),
+		    .running(running));
 
    wire [7:0] 		    h7;
    wire [7:0] 		    h6;
@@ -160,6 +162,6 @@ module phasegen_test(input        sys_clock,
    assign seg7_h = {h7, h6, h5, h4, 32'b0};
    assign seg7_dot64 = 64'b0;
 
-   assign led_out = {cstate[3], cstate[2], cstate[1], cstate[0], clock, ~clock, 2'b00};
+   assign led_out = {cstate[3], cstate[2], cstate[1], cstate[0], clock, ~clock, running, 1'b00};
 
 endmodule

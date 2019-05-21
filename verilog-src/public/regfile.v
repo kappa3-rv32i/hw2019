@@ -15,10 +15,10 @@
 //   書き込みは無視される．JAL 命令などでどのレジスタにも内容を
 //   書き込みたくない場合に使用される．
 // * 読み出しは随時可．
-// * 書き込みは ld信号を 1にする．
 // * reset が 0 になったら全てのレジスタの内容を 32'h0 にする．
-// * dbg_ld が 1 の時，dbg_addr で指定されたレジスタに dbg_in の値を書き込む．
-//   優先順位は ld よりも上
+// * 通常の書き込みは dbg_modeを0かつld信号を1にする．
+// * dbg_mode が 1かつdbg_ld が 1 の時，dbg_addr で指定されたレジスタに
+//   dbg_in の値を書き込む．
 // * dbg_out には常に dbg_addr で指定されたレジスタの内容が出力される．
 //
 // [入出力]
@@ -31,28 +31,30 @@
 // ld:       書き込み信号
 // rs1_out:  rs1 の読み出しデータ(32ビット)
 // rs2_out:  rs2 の読み出しデータ(32ビット)
+// dbg_mode: デバックモード
 // dbg_in:   デバッグ用書き込みデータ
 // dbg_addr: デバッグ用アドレス(5ビット)
 // dbg_ld:   デバッグ用書き込み信号
 // dbg_out:  デバッグ用読み出しデータ
-module regfile(input 		 clock,
-	       input 		 reset,
+module regfile(input 	     clock,
+	       input 	     reset,
 
-	       input [4:0] 	 rs1_addr,
-	       input [4:0] 	 rs2_addr,
-	       input [4:0] 	 rd_addr,
+	       input [4:0]   rs1_addr,
+	       input [4:0]   rs2_addr,
+	       input [4:0]   rd_addr,
 
-	       input [31:0] 	 in,
-	       input 		 ld,
+	       input [31:0]  in,
+	       input 	     ld,
 
-	       output [31:0]     rs1_out,
-	       output [31:0]     rs2_out,
+	       output [31:0] rs1_out,
+	       output [31:0] rs2_out,
 
 	       // デバッグ関係
-	       input [31:0]      dbg_in,
-	       input [4:0]	 dbg_addr,
-	       input 		 dbg_ld,
-	       output [31:0] 	 dbg_out);
+	       input 	     dbg_mode,
+	       input [31:0]  dbg_in,
+	       input [4:0]   dbg_addr,
+	       input 	     dbg_ld,
+	       output [31:0] dbg_out);
 
    // レジスタファイルの本体
    reg [31:0] reg01;
@@ -158,16 +160,15 @@ module regfile(input 		 clock,
       end
    endfunction // select_reg
 
-
    // 各レジスタの書き込みを行う．
    always @ ( negedge reset or posedge clock ) begin
       if ( !reset ) begin
 	 reg01 <= 32'h0;
-	 reg02 <= 32'h1;
-	 reg03 <= 32'h2;
-	 reg04 <= 32'h3;
-	 reg05 <= 32'h4;
-	 reg06 <= 32'h5;
+	 reg02 <= 32'h0;
+	 reg03 <= 32'h0;
+	 reg04 <= 32'h0;
+	 reg05 <= 32'h0;
+	 reg06 <= 32'h0;
 	 reg07 <= 32'h0;
 	 reg08 <= 32'h0;
 	 reg09 <= 32'h0;
@@ -194,7 +195,7 @@ module regfile(input 		 clock,
 	 reg30 <= 32'h0;
 	 reg31 <= 32'h0;
       end
-      else if ( dbg_ld ) begin
+      else if ( dbg_mode && dbg_ld ) begin
 	 case ( dbg_addr )
 	   0:  ; // なにもしない
 	   1:  reg01 <= dbg_in;
@@ -230,7 +231,7 @@ module regfile(input 		 clock,
 	   31: reg31 <= dbg_in;
 	 endcase // case ( dbg_addr )
       end
-      else if ( ld ) begin
+      else if ( !dbg_mode && ld ) begin
 	 case ( rd_addr )
 	   0:  ; // なにもしない
 	   1:  reg01 <= in;

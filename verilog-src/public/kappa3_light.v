@@ -204,6 +204,10 @@ module kappa3_light(input        sys_clock,
    assign rk_h = dec_out0;
 
    // KAPPA3-LIGHTのコア
+   wire 		    run;
+   wire 		    step_phase;
+   wire 		    step_inst;
+   wire [3:0] 		    cstate;
    wire [31:0] 		    pc_out;
    wire 		    pc_ld;
    wire [31:0] 		    ir_out;
@@ -221,11 +225,13 @@ module kappa3_light(input        sys_clock,
    wire 		    mem_read;
    wire 		    mem_write;
    wire [31:0] 		    mem_rddata;
+   wire 		    dbg_mode;
    kappa3_light_core kapp3_light_core(.reset(reset),
 				      .clock(clock),
-				      .run(button1),
-				      .step_phase(button2),
-				      .step_inst(button3),
+				      .run(run),
+				      .step_phase(step_phase),
+				      .step_inst(step_inst),
+				      .cstate(cstate),
 				      .dbg_in(dbg_in),
 				      .dbg_pc_ld(pc_ld),
 				      .dbg_pc_out(pc_out),
@@ -253,6 +259,10 @@ module kappa3_light(input        sys_clock,
 		     .button1(button1),
 		     .button2(button2),
 		     .button3(button3),
+		     .run(run),
+		     .step_phase(step_phase),
+		     .step_inst(step_inst),
+		     .cstate(cstate),
 		     .hex_a(hex_a),
 		     .hex_b(hex_b),
 		     .dip_a(dip_a),
