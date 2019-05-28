@@ -111,6 +111,12 @@ module kappa3_light(input        sys_clock,
 			      .seg_y(seg_y),
 			      .sel_y(sel_y));
 
+   // clock の2倍のクロック
+   reg 			    clock2;
+   always @ ( posedge clock ) begin
+      clock2 = clock2 ^ 1'b1;
+   end
+
    // シンクロナイザ
    wire 		    out_a0;
    wire 		    out_a1;
@@ -132,26 +138,26 @@ module kappa3_light(input        sys_clock,
    wire 		    out_d2;
    wire 		    out_d3;
    wire 		    out_d4;
-   syncro syncro_a0(.clock(clock), .reset(reset), .in(psw_a0), .out(out_a0));
-   syncro syncro_a1(.clock(clock), .reset(reset), .in(psw_a1), .out(out_a1));
-   syncro syncro_a2(.clock(clock), .reset(reset), .in(psw_a2), .out(out_a2));
-   syncro syncro_a3(.clock(clock), .reset(reset), .in(psw_a3), .out(out_a3));
-   syncro syncro_a4(.clock(clock), .reset(reset), .in(psw_a4), .out(out_a4));
-   syncro syncro_b0(.clock(clock), .reset(reset), .in(psw_b0), .out(out_b0));
-   syncro syncro_b1(.clock(clock), .reset(reset), .in(psw_b1), .out(out_b1));
-   syncro syncro_b2(.clock(clock), .reset(reset), .in(psw_b2), .out(out_b2));
-   syncro syncro_b3(.clock(clock), .reset(reset), .in(psw_b3), .out(out_b3));
-   syncro syncro_b4(.clock(clock), .reset(reset), .in(psw_b4), .out(out_b4));
-   syncro syncro_c0(.clock(clock), .reset(reset), .in(psw_c0), .out(out_c0));
-   syncro syncro_c1(.clock(clock), .reset(reset), .in(psw_c1), .out(out_c1));
-   syncro syncro_c2(.clock(clock), .reset(reset), .in(psw_c2), .out(out_c2));
-   syncro syncro_c3(.clock(clock), .reset(reset), .in(psw_c3), .out(out_c3));
-   syncro syncro_c4(.clock(clock), .reset(reset), .in(psw_c4), .out(out_c4));
-   syncro syncro_d0(.clock(clock), .reset(reset), .in(psw_d0), .out(out_d0));
-   syncro syncro_d1(.clock(clock), .reset(reset), .in(psw_d1), .out(out_d1));
-   syncro syncro_d2(.clock(clock), .reset(reset), .in(psw_d2), .out(out_d2));
-   syncro syncro_d3(.clock(clock), .reset(reset), .in(psw_d3), .out(out_d3));
-   syncro syncro_d4(.clock(clock), .reset(reset), .in(psw_d4), .out(out_d4));
+   syncro syncro_a0(.clock(clock2), .reset(reset), .in(psw_a0), .out(out_a0));
+   syncro syncro_a1(.clock(clock2), .reset(reset), .in(psw_a1), .out(out_a1));
+   syncro syncro_a2(.clock(clock2), .reset(reset), .in(psw_a2), .out(out_a2));
+   syncro syncro_a3(.clock(clock2), .reset(reset), .in(psw_a3), .out(out_a3));
+   syncro syncro_a4(.clock(clock2), .reset(reset), .in(psw_a4), .out(out_a4));
+   syncro syncro_b0(.clock(clock2), .reset(reset), .in(psw_b0), .out(out_b0));
+   syncro syncro_b1(.clock(clock2), .reset(reset), .in(psw_b1), .out(out_b1));
+   syncro syncro_b2(.clock(clock2), .reset(reset), .in(psw_b2), .out(out_b2));
+   syncro syncro_b3(.clock(clock2), .reset(reset), .in(psw_b3), .out(out_b3));
+   syncro syncro_b4(.clock(clock2), .reset(reset), .in(psw_b4), .out(out_b4));
+   syncro syncro_c0(.clock(clock2), .reset(reset), .in(psw_c0), .out(out_c0));
+   syncro syncro_c1(.clock(clock2), .reset(reset), .in(psw_c1), .out(out_c1));
+   syncro syncro_c2(.clock(clock2), .reset(reset), .in(psw_c2), .out(out_c2));
+   syncro syncro_c3(.clock(clock2), .reset(reset), .in(psw_c3), .out(out_c3));
+   syncro syncro_c4(.clock(clock2), .reset(reset), .in(psw_c4), .out(out_c4));
+   syncro syncro_d0(.clock(clock2), .reset(reset), .in(psw_d0), .out(out_d0));
+   syncro syncro_d1(.clock(clock2), .reset(reset), .in(psw_d1), .out(out_d1));
+   syncro syncro_d2(.clock(clock2), .reset(reset), .in(psw_d2), .out(out_d2));
+   syncro syncro_d3(.clock(clock2), .reset(reset), .in(psw_d3), .out(out_d3));
+   syncro syncro_d4(.clock(clock2), .reset(reset), .in(psw_d4), .out(out_d4));
 
    // キーエンコーダ
    wire [15:0] 		    keys;
@@ -168,7 +174,7 @@ module kappa3_light(input        sys_clock,
    wire 		    button1;
    wire 		    button2;
    wire 		    button3;
-   keybuf keybuf_inst(.clock(clock), .reset(reset),
+   keybuf keybuf_inst(.clock(clock2), .reset(reset),
 		      .key_in(key_in), .key_val(key_val),
 		      .clear(out_a4), .out(dbg_in));
 
@@ -208,6 +214,7 @@ module kappa3_light(input        sys_clock,
    wire 		    step_phase;
    wire 		    step_inst;
    wire [3:0] 		    cstate;
+   wire 		    running;
    wire [31:0] 		    pc_out;
    wire 		    pc_ld;
    wire [31:0] 		    ir_out;
@@ -225,13 +232,14 @@ module kappa3_light(input        sys_clock,
    wire 		    mem_read;
    wire 		    mem_write;
    wire [31:0] 		    mem_rddata;
-   wire 		    dbg_mode;
    kappa3_light_core kapp3_light_core(.reset(reset),
 				      .clock(clock),
+				      .clock2(clock2),
 				      .run(run),
 				      .step_phase(step_phase),
 				      .step_inst(step_inst),
 				      .cstate(cstate),
+				      .running(running),
 				      .dbg_in(dbg_in),
 				      .dbg_pc_ld(pc_ld),
 				      .dbg_pc_out(pc_out),
@@ -254,7 +262,7 @@ module kappa3_light(input        sys_clock,
    // デバッガ
    debugger dbg_inst(.sys_clock(sys_clock),
 		     .reset(reset),
-		     .clock(clock),
+		     .clock(clock2),
 		     .input_val(dbg_in),
 		     .button1(button1),
 		     .button2(button2),
@@ -263,6 +271,7 @@ module kappa3_light(input        sys_clock,
 		     .step_phase(step_phase),
 		     .step_inst(step_inst),
 		     .cstate(cstate),
+		     .running(running),
 		     .hex_a(hex_a),
 		     .hex_b(hex_b),
 		     .dip_a(dip_a),

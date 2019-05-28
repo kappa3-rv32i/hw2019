@@ -74,6 +74,7 @@ module debugger(input         sys_clock,
 		output 	      step_phase,
 		output 	      step_inst,
 		input [3:0]   cstate,
+		input 	      running,
 		input [3:0]   hex_a,
 		input [3:0]   hex_b,
 		input [7:0]   dip_a,
@@ -412,7 +413,7 @@ module debugger(input         sys_clock,
    reg [23:0] seg7_blink_count;
    // 点滅信号
    wire blink;
-   assign blink = seg7_blink_count[23] | ~dbg_mode;
+   assign blink = seg7_blink_count[23] | ~input_mode;
 
    // 点滅用の状態遷移
    // blink が 約 1.2 秒の間隔で点滅する．
@@ -445,8 +446,8 @@ module debugger(input         sys_clock,
    wire 			       mar_sel;
    // メモリが書き込み対象として選択されている．
    wire 			       mem_sel;
-   // デバッグモード
-   wire 			       dbg_mode;
+   // 入力モード
+   wire 			       input_mode;
 
    assign page   = page_func(hex_a);
    assign pc_sel = (hex_a == 4'b0000);
@@ -458,9 +459,9 @@ module debugger(input         sys_clock,
    assign mar_sel = (hex_a == 4'b1000);
    assign mem_sel = (hex_a == 4'b1001);
 
-   // dip-Aの0ビット目がデバッグスイッチ
+   // dip-Aの0ビット目が入力モードのスイッチ
    // ただし負論理なので注意
-   assign dbg_mode = ~dip_a[0];
+   assign input_mode = ~dip_a[0];
 
    assign seg7_a = a_func(page);
    assign seg7_b = b_func(page, pc_out, c_out)   & blink_func(pc_sel | c_sel, blink);
@@ -471,33 +472,23 @@ module debugger(input         sys_clock,
    assign seg7_g = g_func(page);
    assign seg7_h = b_func(page, b_out, mem_out)  & blink_func(b_sel | mem_sel, blink);
 
-   assign run        = button1 & !dbg_mode;
-   assign step_phase = button2 & !dbg_mode;
-   assign step_inst  = button3 & !dbg_mode;
-   assign pc_ld     = pc_sel  & dbg_mode & button3;
-   assign ir_ld     = ir_sel  & dbg_mode & button3;
-   assign a_ld      = a_sel   & dbg_mode & button3;
-   assign b_ld      = b_sel   & dbg_mode & button3;
-   assign c_ld      = c_sel   & dbg_mode & button3;
-   assign reg_ld    = reg_sel & dbg_mode & button3;
-   assign mar_ld    = mar_sel & dbg_mode & button3;
-   assign mar_inc   =           dbg_mode & button1;
-   assign mar_dec   =           dbg_mode & button2;
-   assign mem_addr  = mar;
-   assign mem_write = mem_sel & dbg_mode & button3;
-   assign mem_read  = mem_sel & dbg_mode & ~button3;
+   assign run        = !input_mode & button1;
+   assign step_phase = !input_mode & button2;
+   assign step_inst  = !input_mode & button3;
+   assign pc_ld      =  input_mode & button3 & pc_sel;
+   assign ir_ld      =  input_mode & button3 & ir_sel;
+   assign a_ld       =  input_mode & button3 & a_sel;
+   assign b_ld       =  input_mode & button3 & b_sel;
+   assign c_ld       =  input_mode & button3 & c_sel;
+   assign reg_ld     =  input_mode & button3 & reg_sel;
+   assign mar_ld     =  input_mode & button3 & mar_sel;
+   assign mar_inc    =  input_mode & button1;
+   assign mar_dec    =  input_mode & button2;
+   assign mem_addr   = mar;
+   assign mem_write  =  input_mode & button3 & mem_sel;
+   assign mem_read   =  input_mode & ~button3 & mem_sel;
 
-   reg [7:0] 			       clock_count;
-   always @ ( posedge clock or negedge reset ) begin
-      if ( !reset ) begin
-	 clock_count <= 8'b1000_0000;
-      end
-      else begin
-	 clock_count <= {clock_count[6:0], clock_count[7]};
-      end
-   end
-   //assign led_out = clock_count;
-   assign led_out = {cstate, 4'b0};
+   assign led_out = {cstate, 3'b0, running};
 
 
 endmodule // debugger
