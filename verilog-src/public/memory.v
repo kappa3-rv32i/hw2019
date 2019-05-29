@@ -7,11 +7,9 @@
 // All rights reserved.
 //
 // [概要]
-// * 16Kバイトのメモリブロックを4つ(=64Kバイト)用いる．
-// * 読み出すときには4つのメモリから読み出した値を連結する．
-// * 書き込むときには wrbits で指定されたブロックにのみ書き込む．
+// * 64Kバイトの2ポートメモリを用いている．
+// * 書き込むときには wrbits で指定されたバイトにのみ書き込む．
 // * 実は read 信号は用いられない．
-// * 書き込みは dbg_write が write より優先する．
 //
 // [入出力]
 // clock:       クロック
@@ -21,11 +19,11 @@
 // wrdata:      書き込みデータ
 // wrbits:      書き込み用ビットマスク
 // rddata:      読み出しデータ
-// dbg_mode:    デバッグモード
 // dbg_address: デバッグ用のアドレス
 // dbg_read:    デバッグ用の読み出しイネーブル
 // dbg_write:   デバッグ用の書き込みイネーブル
 // dbg_in:      デバッグ用の書込みデータ
+// dbg_out:     デバッグ用の読み出しデータ
 module memory(input         clock,
 	      input [31:0]  address,
 	      input 	    read,
@@ -34,72 +32,23 @@ module memory(input         clock,
 	      input [3:0]   wrbits,
 	      output [31:0] rddata,
 
-	      input 	    dbg_mode,
 	      input [31:0]  dbg_address,
 	      input 	    dbg_read,
 	      input 	    dbg_write,
-	      input [31:0]  dbg_in);
+	      input [31:0]  dbg_in,
+	      output [31:0] dbg_out);
 
-   // 本当のアドレス
-   // address と dbg_address から適切な方を選ぶ
-   wire [31:0]		    eaddress;
-
-   // 本当の wrdata
-   wire [31:0] 		    ewrdata;
-
-   // 本当の wribts
-   // デバッグモードでは常に全バイト書き込む．
-   reg [3:0] 		    ewrbits;
-
-   // address が範囲内にある時 1 になる信号
-   wire 		    select;
-
-   // 各メモリブロックごとの書込みイネーブル信号
-   wire 		    wr0, wr1, wr2, wr3;
-
-   // 16k のメモリブロック x 4
-   mem16k mem0(.clock(clock),
-	       .address(eaddress[15:2]),
-	       .wren(wr0),
-	       .data(ewrdata[7:0]),
-	       .q(rddata[7:0]));
-
-   mem16k mem1(.clock(clock),
-	       .address(eaddress[15:2]),
-	       .wren(wr1),
-	       .data(ewrdata[15:8]),
-	       .q(rddata[15:8]));
-
-   mem16k mem2(.clock(clock),
-	       .address(eaddress[15:2]),
-	       .wren(wr2),
-	       .data(ewrdata[23:16]),
-	       .q(rddata[23:16]));
-
-   mem16k mem3(.clock(clock),
-	       .address(eaddress[15:2]),
-	       .wren(wr3),
-	       .data(ewrdata[31:24]),
-	       .q(rddata[31:24]));
-
-   always @ ( * ) begin
-      if ( dbg_write ) begin
-	 ewrbits = 4'b1111;
-      end
-      else if ( write ) begin
-	 ewrbits = wrbits;
-      end
-      else begin
-	 ewrbits = 4'b0000;
-      end
-   end
-
-   assign eaddress = dbg_mode ? dbg_address : address;
-   assign ewrdata = dbg_mode ? dbg_in : wrdata;
-   assign select = (eaddress[31:16] == 16'b0000_0000);
-   assign wr0 = select & ewrbits[0];
-   assign wr1 = select & ewrbits[1];
-   assign wr2 = select & ewrbits[2];
-   assign wr3 = select & ewrbits[3];
+   wire 		    sel_a = address[31:16] == 16'h1000;
+   wire 		    sel_b = dbg_address[31:16] == 16'h1000;
+   mem64kd mem(.clock(clock),
+	       .address_a(address[15:2]),
+	       .address_b(dbg_address[15:2]),
+	       .byteena_a(wrbits),
+	       .data_a(wrdata),
+	       .data_b(dbg_in),
+	       .wren_a(write & sel_a),
+	       .wren_b(dbg_write & sel_b),
+	       .q_a(rddata),
+	       .q_b(dbg_out));
 
 endmodule // memory

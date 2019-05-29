@@ -12,11 +12,13 @@
 //
 // [入出力]
 // clock:         クロック
+// clock2:        clock を2分周したもの
 // reset:         リセット
 // run:           実行開始
 // step_phase:    フェイズごとの実行
 // step_inst:     命令ごとの実行
 // cstate:        制御状態信号
+// running:       実行中を示すフラグ
 // dbg_in:        デバッグ用の書込みデータ
 // dbg_pc_ld:     デバッグ用のPCの書込みイネーブル
 // dbg_ir_ld:     デバッグ用のIRの書込みイネーブル
@@ -36,6 +38,7 @@
 // dbg_c_out:     デバッグ用のCレジスタ出力
 // dbg_mem_out:   デバッグ用のメモリ出力
 module kappa3_light_core(input 	       clock,
+			 input 	       clock2,
 			 input 	       reset,
 
 			 // 実行制御
@@ -44,6 +47,7 @@ module kappa3_light_core(input 	       clock,
 			 input 	       step_inst,
 
 			 output [3:0]  cstate,
+			 output        running;
 
 			 // デバッグ関係
 			 input [31:0]  dbg_in,
@@ -67,12 +71,13 @@ module kappa3_light_core(input 	       clock,
 
    // デバッグモードの信号
    wire 			       dbg_mode;
+   assign dbg_mode = !running;
 
    // PC
    wire [31:0] 			pc_in;       // PC の書き込みデータ
    wire 			pc_ld;       // PC の書き込みイネーブル信号
    wire [31:0] 			pc;          // PC の値
-   reg32 pc_inst(.clock(clock),
+   reg32 pc_inst(.clock(clock2),
 		 .reset(reset),
 		 .in(pc_in),
 		 .ld(pc_ld),
@@ -86,7 +91,7 @@ module kappa3_light_core(input 	       clock,
    wire [31:0] 		 ir_in;      // IR の書き込みデータ
    wire 		 ir_ld;      // IR の書き込みイネーブル信号
    wire [31:0] 		 ir;         // IRの値
-   reg32 ir_inst(.clock(clock),
+   reg32 ir_inst(.clock(clock2),
 		 .reset(reset),
 		 .in(ir_in),
 		 .ld(ir_ld),
@@ -109,12 +114,11 @@ module kappa3_light_core(input 	       clock,
 		   .wrdata(mem_wrdata),
 		   .wrbits(mem_wrbits),
 		   .rddata(mem_rddata),
-		   .dbg_mode(dbg_mode),
 		   .dbg_address(dbg_mem_addr),
 		   .dbg_read(dbg_mem_read),
 		   .dbg_write(dbg_mem_write),
-		   .dbg_in(dbg_in));
-   assign dbg_mem_out = mem_rddata;
+		   .dbg_in(dbg_in),
+		   .dbg_out(dbg_mem_out));
 
    // reg-file
    wire [4:0] 		 rs1_addr;     // rs1 のアドレス
@@ -124,7 +128,7 @@ module kappa3_light_core(input 	       clock,
    wire                  rd_ld;        // rd の書込みイネーブル信号
    wire [31:0] 		 rs1;          // rs1 の値
    wire [31:0] 		 rs2;          // rs2 の値
-   regfile regfile_inst(.clock(clock),
+   regfile regfile_inst(.clock(clock2),
 			.reset(reset),
 			.rs1_addr(rs1_addr),
 			.rs2_addr(rs2_addr),
@@ -142,7 +146,7 @@ module kappa3_light_core(input 	       clock,
    // A-reg
    wire                  a_ld;         // A-reg の書込みイネーブル信号
    wire [31:0] 		 areg;         // A-reg の値
-   reg32 areg_inst(.clock(clock),
+   reg32 areg_inst(.clock(clock2),
 		   .reset(reset),
 		   .in(rs1),
 		   .ld(a_ld),
@@ -155,7 +159,7 @@ module kappa3_light_core(input 	       clock,
    // B-reg
    wire                  b_ld;         // B-reg の書込みイネーブル信号
    wire [31:0] 		 breg;         // B-reg の値
-   reg32 breg_inst(.clock(clock),
+   reg32 breg_inst(.clock(clock2),
 		   .reset(reset),
 		   .in(rs2),
 		   .ld(b_ld),
@@ -172,7 +176,7 @@ module kappa3_light_core(input 	       clock,
    // C-reg
    wire                  c_ld;         // C-reg の書込みイネーブル信号
    wire [31:0] 		 creg;         // C-reg の値
-   reg32 creg_inst(.clock(clock),
+   reg32 creg_inst(.clock(clock2),
 		   .reset(reset),
 		   .in(alu_out),
 		   .ld(c_ld),
@@ -202,13 +206,10 @@ module kappa3_light_core(input 	       clock,
    assign c_ld = 1'b0;
    assign cstate = 4'b0000; // この値もダミー
 
-   // デバッグモードの信号は実際には phasegen の running の否定を用いる．
-   // 以下のようになる．
-   // wire 		 running;
-   // phasegen phasegen_inst(.clock(clock), .reset(reset),
+   // running は実際には phasegen の出力を用いる．
+   // phasegen phasegen_inst(.clock(clock2), .reset(reset),
    //			  .run(run), .step_phase(step_phase), .step_inst(step_inst),
    //			  .cstate(cstate), .running(running));
-   // assign dbg_mode = ~running;
-   assign dbg_mode = 1'b1;
+   assign running = 1'b0;
 
 endmodule // kappa3_light_core
