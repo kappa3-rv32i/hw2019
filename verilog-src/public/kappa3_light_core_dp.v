@@ -47,7 +47,7 @@ module kappa3_light_core(input 	       clock,
 			 input 	       step_inst,
 
 			 output [3:0]  cstate,
-			 output        running;
+			 output        running,
 
 			 // デバッグ関係
 			 input [31:0]  dbg_in,
