@@ -9,6 +9,8 @@
 
 from enum import Enum
 
+labeltbl = {}
+
 ### @brief オプコードの定義
 class Opcode(Enum) :
     LUI   = 0b0110111
@@ -125,7 +127,7 @@ def pack(src, bw) :
     mask = 0
     for i in range(bw - 1) :
         mask |= (1 << i)
-    m_src = src & mask;
+    m_src = src & mask
     if src & (1 << (bw - 1)) :
         return (1 << (bw - 1)) + m_src
     else :
@@ -140,7 +142,7 @@ def unpack(src, bw) :
         mask = 0
         for i in range(bw - 1) :
             mask |= (1 << i)
-            m_src = src & mask;
+            m_src = src & mask
         return m_src - (1 << (bw - 1))
     else :
         return src
@@ -182,6 +184,9 @@ class Inst :
         self.__J_20_20 = None  # [11:11]
         self.__J_19_12 = None  # [19:12]
 
+        self.__cont = False
+#        self.__pc = 0x1000 # for debug
+
     ### @brief LUI命令を作る．
     @staticmethod
     def LUI(rd, imm) :
@@ -197,6 +202,11 @@ class Inst :
     def JAL(rd, imm) :
         return Inst.__Jtype(Opcode.JAL, rd, imm)
 
+    ### @brief JAL命令を作る．(ラベル対応)
+    @staticmethod
+    def LJAL(rd, label) :
+        return Inst.__LJtype(Opcode.JAL, rd, label)
+
     ### @brief JALR命令を作る．
     @staticmethod
     def JALR(rd, rs1, imm) :
@@ -207,30 +217,60 @@ class Inst :
     def BEQ(rs1, rs2, imm) :
         return Inst.__Btype(Opcode.BEQ, Funct3.BEQ, rs1, rs2, imm)
 
+    ### @brief Label BEQ命令を作る．
+    @staticmethod
+    def LBEQ(rs1, rs2, label) :
+        return Inst.__LBtype(Opcode.BEQ, Funct3.BEQ, rs1, rs2, label)
+
     ### @brief BNE命令を作る．
     @staticmethod
     def BNE(rs1, rs2, imm) :
         return Inst.__Btype(Opcode.BEQ, Funct3.BNE, rs1, rs2, imm)
+
+    ### @brief Label BNE命令を作る．
+    @staticmethod
+    def LBNE(rs1, rs2, label) :
+        return Inst.__LBtype(Opcode.BEQ, Funct3.BNE, rs1, rs2, label)
 
     ### @brief BLT命令を作る．
     @staticmethod
     def BLT(rs1, rs2, imm) :
         return Inst.__Btype(Opcode.BEQ, Funct3.BLT, rs1, rs2, imm)
 
+    ### @brief Label BLT命令を作る．
+    @staticmethod
+    def LBLT(rs1, rs2, label) :
+        return Inst.__LBtype(Opcode.BEQ, Funct3.BLT, rs1, rs2, label)
+
     ### @brief BGE命令を作る．
     @staticmethod
     def BGE(rs1, rs2, imm) :
         return Inst.__Btype(Opcode.BEQ, Funct3.BGE, rs1, rs2, imm)
+
+    ### @brief Label BGE命令を作る．
+    @staticmethod
+    def LBGE(rs1, rs2, label) :
+        return Inst.__LBtype(Opcode.BEQ, Funct3.BGE, rs1, rs2, label)
 
     ### @brief BLTU命令を作る．
     @staticmethod
     def BLTU(rs1, rs2, imm) :
         return Inst.__Btype(Opcode.BEQ, Funct3.BLTU, rs1, rs2, imm)
 
+    ### @brief label BLTU命令を作る．
+    @staticmethod
+    def LBLTU(rs1, rs2, label) :
+        return Inst.__LBtype(Opcode.BEQ, Funct3.BLTU, rs1, rs2, label)
+
     ### @brief BGEU命令を作る．
     @staticmethod
     def BGEU(rs1, rs2, imm) :
         return Inst.__Btype(Opcode.BEQ, Funct3.BGEU, rs1, rs2, imm)
+
+    ### @brief label BGEU命令を作る．
+    @staticmethod
+    def LBGEU(rs1, rs2, label) :
+        return Inst.__LBtype(Opcode.BEQ, Funct3.BGEU, rs1, rs2, label)
 
     ### @brief LB命令を作る．
     @staticmethod
@@ -388,6 +428,18 @@ class Inst :
         inst.__I_31_20 = pack(imm, 12)
         return inst
 
+    ### @brief Label I-type の命令を作る．
+    @staticmethod
+    def __LItype(opcode, funct3, rd, rs1, label) :
+        inst = Inst(opcode)
+        inst.__funct3 = funct3
+        inst.__rs1 = rs1
+        inst.__rd = rd
+        inst.label = label
+        inst.__cont = lambda self: Inst.__Itype(opcode, funct3, rd, rs1, Inst.pcrelref(self))
+
+        return inst
+
     ### @brief シフト命令用の I-type の命令を作る．
     @staticmethod
     def __Itype2(opcode, funct3, rd, rs1, imm, funct7) :
@@ -425,6 +477,15 @@ class Inst :
         inst.__B_07_07 = part(p_imm, 11, 11)
         return inst
 
+    ### @brief Label Label B-type の命令を作る．
+    @staticmethod
+    def __LBtype(opcode, funct3, rs1, rs2, label) :
+        inst = Inst(opcode)
+        inst.label = label
+        inst.__cont = lambda self: Inst.__Btype(opcode, funct3, rs1, rs2, Inst.pcrelref(self))
+
+        return inst
+
     ### @brief U-type の命令を作る．
     @staticmethod
     def __Utype(opcode, rd, imm) :
@@ -444,6 +505,20 @@ class Inst :
         inst.__J_20_20 = part(p_imm, 11, 11)
         inst.__J_19_12 = part(p_imm, 19, 12)
         return inst
+
+    ### @brief Label J-type の命令を作る．
+    @staticmethod
+    def __LJtype(opcode, rd, label) :
+        inst = Inst(opcode)
+        inst.__rd = rd
+        inst.label = label
+        inst.__cont = lambda self: Inst.__Jtype(opcode, rd, Inst.pcrelref(self))
+
+        return inst
+
+    @staticmethod
+    def pcrelref(self):
+        return -(self.pc - labeltbl[self.label])
 
     ### @brief lui 命令のとき true を返す．
     def is_lui(self) :
@@ -848,6 +923,37 @@ class Inst :
 
         return line
 
+    def force(self):
+        if self.__cont:
+            return self.__cont(self)
+        else:
+            return self
+
+def asm(program):
+    # pass1: make symbol table
+    pc = 0x10000000
+    for inst in program:
+        if type(inst) is str:
+            # label
+            labeltbl[inst] = pc
+        else:
+            # instruction
+            inst.pc = pc
+            pc += 4
+
+    # pass2: resolve and remove labels
+    program = [inst.force() for inst in program if type(inst) is not str]
+
+    return program
+
+def print_asm(program):
+    for i in program :
+        print('{:08x} | {}'.format(i.gen_code(), i.gen_mnemonic()))
+
+def print_ihex(program):
+    for offset, inst in enumerate(program) :
+        print(inst.gen_HEX(offset))
+    print(':00000001FF\n')
 
 if __name__ == '__main__' :
 
